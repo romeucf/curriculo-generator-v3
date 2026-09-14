@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Currículo Claro — crie, salve e exporte seu currículo</title>
+  <meta name="description" content="Editor minimalista de currículos com exportação para PDF, PNG e impressão, além de projeto editável.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232d5bff'/%3E%3Cpath d='M20 15h19l8 8v26H20z' fill='white'/%3E%3Cpath d='M39 15v9h8M26 32h15M26 39h15' fill='none' stroke='%232d5bff' stroke-width='3'/%3E%3C/svg%3E">
+  <style>
+    :root{--ink:#171717;--muted:#707070;--line:#dcdfe5;--paper:#fff;--canvas:#eef0f5;--panel:#fafafa;--blue:#2d5bff;--blue-dark:#1643e5;--focus:#8ea7ff;--shadow:0 18px 55px rgba(22,28,45,.12)}
+    *{box-sizing:border-box}
+    html{font-size:16px}
+    body{margin:0;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:var(--canvas)}
+    button,input,textarea,select{font:inherit}
+    button{cursor:pointer}
+    .app{min-height:100vh;display:grid;grid-template-rows:64px 1fr}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:0 24px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+    .brand{display:flex;align-items:center;gap:11px;font-weight:750;letter-spacing:-.02em}
+    .brand-mark{width:31px;height:36px;border-radius:7px;background:var(--blue);display:grid;place-items:center;color:white;box-shadow:0 6px 16px rgba(45,91,255,.22)}
+    .brand-mark svg{width:18px}
+    .save-state{font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:7px}
+    .save-state::before{content:"";width:7px;height:7px;border-radius:50%;background:#20a064}
+    .top-actions{display:flex;align-items:center;gap:8px}
+    .btn{border:1px solid var(--line);background:#fff;color:var(--ink);min-height:38px;border-radius:8px;padding:0 13px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:.88rem;font-weight:650;transition:.16s ease}
+    .btn:hover{background:#f4f5f7;border-color:#c9ccd2}
+    .btn.primary{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 6px 16px rgba(45,91,255,.19)}
+    .btn.primary:hover{background:var(--blue-dark)}
+    .btn.icon{width:38px;padding:0}
+    .btn svg{width:16px;height:16px}
+    .workspace{display:grid;grid-template-columns:minmax(350px,470px) minmax(620px,1fr);min-height:calc(100vh - 64px)}
+    .editor{background:var(--panel);border-right:1px solid var(--line);padding:26px 28px 60px;overflow:auto;max-height:calc(100vh - 64px)}
+    .editor-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:25px}
+    .eyebrow{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);font-weight:800;margin:0 0 6px}
+    h1{font-size:1.55rem;letter-spacing:-.035em;margin:0;line-height:1.15}
+    .step{font-size:.8rem;color:var(--muted)}
+    .progress{height:3px;background:#e4e5e9;border-radius:10px;margin-bottom:28px;overflow:hidden}
+    .progress span{display:block;width:25%;height:100%;background:var(--blue)}
+    .section{border-top:1px solid var(--line);padding:22px 0}
+    .section:first-of-type{border-top:0;padding-top:0}
+    .section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .section-title h2{margin:0;font-size:.98rem;letter-spacing:-.015em}
+    .section-title small{color:var(--muted);font-size:.75rem}
+    .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field.full{grid-column:1/-1}
+    label{font-size:.78rem;font-weight:700;color:#4d4d4d}
+    input,textarea,select{width:100%;border:1px solid #d5d7dc;background:#fff;border-radius:8px;color:var(--ink);padding:10px 11px;outline:none;min-height:42px}
+    textarea{min-height:94px;resize:vertical;line-height:1.45}
+    input:focus,textarea:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(45,91,255,.12)}
+    .preview-zone{padding:34px;display:flex;justify-content:center;align-items:flex-start;overflow:auto;max-height:calc(100vh - 64px);position:relative}
+    .paper-wrap{position:relative}
+    .paper{width:720px;min-height:1018px;background:var(--paper);box-shadow:var(--shadow);padding:62px 66px;transform-origin:top center}
+    .resume-header{padding-bottom:26px;border-bottom:2px solid #171717}
+    .resume-name{font-family:Georgia,serif;font-size:2.5rem;letter-spacing:-.045em;line-height:1;margin:0 0 10px}
+    .resume-role{font-size:.9rem;letter-spacing:.11em;text-transform:uppercase;font-weight:800;color:var(--blue);margin:0 0 16px}
+    .resume-contact{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.78rem;color:#555}
+    .resume-contact span{white-space:nowrap}
+    .resume-body{display:grid;grid-template-columns:1.72fr .9fr;gap:44px;padding-top:29px}
+    .resume-section{margin-bottom:26px}
+    .resume-section h3{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;border-bottom:1px solid #bdbdbd;padding-bottom:7px;margin:0 0 13px}
+    .summary{font-family:Georgia,serif;font-size:.9rem;line-height:1.65;color:#333;margin:0}
+    .entry{margin-bottom:17px}
+    .entry-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:3px}
+    .entry-title{font-size:.88rem;font-weight:800}
+    .entry-date{font-size:.7rem;color:#666;white-space:nowrap}
+    .entry-sub{font-size:.77rem;color:var(--blue);font-weight:700;margin-bottom:6px}
+    .entry-desc{font-size:.77rem;line-height:1.55;color:#494949;margin:0}
+    .skill-list{display:flex;flex-wrap:wrap;gap:7px}
+    .skill{font-size:.72rem;border:1px solid #d1d1d1;border-radius:999px;padding:5px 8px}
+    .language{display:flex;justify-content:space-between;font-size:.76rem;padding:6px 0;border-bottom:1px solid #ececec}
+    .hint{position:absolute;top:12px;right:14px;background:#151515;color:#fff;border-radius:6px;padding:7px 10px;font-size:.72rem;box-shadow:0 8px 20px rgba(0,0,0,.15)}
+    .mobile-tabs{display:none}
+    @media(max-width:980px){
+      .topbar{padding:0 14px}.save-state,.desktop-only{display:none}.workspace{display:block;overflow:hidden}.editor,.preview-zone{max-height:none;min-height:calc(100vh - 112px)}.preview-zone{display:none;padding:20px 8px;overflow:hidden}.workspace.preview-mode .editor{display:none}.workspace.preview-mode .preview-zone{display:flex}.mobile-tabs{display:grid;grid-template-columns:1fr 1fr;position:sticky;top:64px;z-index:18;background:#fff;border-bottom:1px solid var(--line);height:48px}.mobile-tab{border:0;background:#fff;font-size:.85rem;font-weight:750;color:#777;border-bottom:2px solid transparent}.mobile-tab.active{color:var(--blue);border-color:var(--blue)}.editor{padding:24px 18px 60px}.hint{display:none}}
+    @media(max-width:430px){.brand span{display:none}.field-grid{grid-template-columns:1fr}.field.full{grid-column:auto}}
+    @media print{body{background:#fff}.topbar,.editor,.mobile-tabs,.hint{display:none!important}.app,.workspace,.preview-zone{display:block!important;min-height:0;max-height:none;padding:0;margin:0;background:#fff}.paper{width:210mm;min-height:297mm;box-shadow:none;margin:0;transform:none;padding:17mm 18mm}@page{size:A4;margin:0}}
+    .toolbar-group{display:flex;align-items:center;gap:8px}
+    .select-compact{min-height:38px;width:auto;padding:0 30px 0 10px;font-size:.84rem;font-weight:650}
+    .card{position:relative;padding:15px;border:1px solid var(--line);background:#fff;border-radius:10px;margin-bottom:11px}
+    .card-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+    .card .remove{position:absolute;right:9px;top:9px;border:0;background:transparent;color:#777;width:30px;height:30px;border-radius:6px;font-size:1.15rem}
+    .card .remove:hover{background:#f1f1f2;color:#d52e2e}
+    .card .field:first-of-type{padding-right:28px}
+    .add-btn{width:100%;border:1px dashed #b9beca;background:transparent;color:#4b5361;border-radius:8px;min-height:40px;font-size:.84rem;font-weight:700}
+    .add-btn:hover{border-color:var(--blue);color:var(--blue);background:rgba(45,91,255,.035)}
+    .template-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .template-choice{border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 6px;text-align:center;color:#666;font-size:.75rem;font-weight:700}
+    .template-choice::before{content:"";display:block;height:43px;margin:0 auto 7px;width:32px;border:1px solid #bfc2c8;background:linear-gradient(#222 0 0) 5px 7px/21px 3px no-repeat,linear-gradient(#bbb 0 0) 5px 14px/21px 1px no-repeat,linear-gradient(#bbb 0 0) 5px 19px/15px 1px no-repeat,linear-gradient(#bbb 0 0) 5px 27px/21px 1px no-repeat,linear-gradient(#bbb 0 0) 5px 32px/18px 1px no-repeat}
+    .template-choice[data-template="mono"]::before{background:linear-gradient(#222 0 0) 5px 6px/13px 3px no-repeat,linear-gradient(#222 0 0) 5px 13px/22px 1px no-repeat,linear-gradient(#bbb 0 0) 5px 19px/22px 1px no-repeat,linear-gradient(#bbb 0 0) 5px 26px/22px 1px no-repeat,linear-gradient(#bbb 0 0) 5px 31px/18px 1px no-repeat}
+    .template-choice[data-template="sidebar"]::before{background:linear-gradient(#222 0 0) 0 0/10px 100% no-repeat,linear-gradient(#222 0 0) 14px 7px/14px 3px no-repeat,linear-gradient(#bbb 0 0) 14px 14px/14px 1px no-repeat,linear-gradient(#bbb 0 0) 14px 21px/14px 1px no-repeat,linear-gradient(#bbb 0 0) 14px 27px/12px 1px no-repeat}
+    .template-choice.active{border-color:var(--blue);color:var(--blue);box-shadow:0 0 0 2px rgba(45,91,255,.1)}
+    .color-row{display:flex;gap:9px;margin-top:13px}
+    .swatch{width:30px;height:30px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #cfd1d6;background:var(--swatch)}
+    .swatch.active{box-shadow:0 0 0 2px var(--ink)}
+    .tags-input{display:flex;flex-wrap:wrap;gap:7px;min-height:42px;border:1px solid #d5d7dc;background:#fff;border-radius:8px;padding:7px}
+    .tag-pill{display:flex;align-items:center;gap:5px;background:#eef1ff;color:#2446bd;border-radius:999px;padding:5px 8px;font-size:.75rem;font-weight:700}
+    .tag-pill button{border:0;background:transparent;color:inherit;padding:0;font-weight:800}
+    .tags-input input{border:0;box-shadow:none!important;padding:3px;min-height:24px;min-width:110px;flex:1}
+    dialog{border:0;border-radius:14px;padding:0;box-shadow:0 25px 80px rgba(0,0,0,.28);width:min(92vw,520px);color:var(--ink)}
+    dialog::backdrop{background:rgba(18,21,29,.55);backdrop-filter:blur(3px)}
+    .modal-head{display:flex;align-items:center;justify-content:space-between;padding:21px 23px;border-bottom:1px solid var(--line)}
+    .modal-head h2{font-size:1.1rem;margin:0}
+    .close-btn{border:0;background:#f1f2f4;border-radius:7px;width:32px;height:32px;font-size:1.2rem}
+    .export-list{padding:12px}
+    .export-option{display:grid;grid-template-columns:44px 1fr auto;gap:13px;align-items:center;width:100%;text-align:left;border:0;background:#fff;padding:13px;border-radius:10px;color:var(--ink)}
+    .export-option:hover{background:#f5f6f8}
+    .export-icon{width:44px;height:44px;border-radius:9px;background:#eef1ff;color:var(--blue);display:grid;place-items:center;font-weight:850;font-size:.75rem}
+    .export-option strong{display:block;font-size:.9rem;margin-bottom:3px}
+    .export-option small{display:block;color:var(--muted);font-size:.76rem}
+    .chev{color:#999;font-size:1.2rem}
+    .modal-note{margin:0;padding:13px 23px 20px;color:#666;font-size:.76rem;line-height:1.5}
+    .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);background:#171717;color:#fff;border-radius:9px;padding:11px 15px;font-size:.84rem;opacity:0;pointer-events:none;transition:.2s;z-index:60;box-shadow:0 12px 30px rgba(0,0,0,.25)}
+    .toast.show{opacity:1;transform:translate(-50%,0)}
+    .empty-copy{font-size:.76rem;color:#888;font-style:italic}
+    .paper.template-mono{padding-top:54px}
+    .template-mono .resume-header{border-bottom:1px solid #aaa}
+    .template-mono .resume-name{font-family:Inter,ui-sans-serif,sans-serif;font-size:2.15rem;font-weight:850}
+    .template-mono .resume-role,.template-mono .entry-sub{color:#333}
+    .template-mono .resume-section h3{border:0;padding:0;margin-bottom:11px}
+    .paper.template-sidebar{padding:0;overflow:hidden}
+    .template-sidebar .resume-header{margin-left:214px;padding:58px 54px 28px;border:0}
+    .template-sidebar .resume-name{font-size:2.25rem}
+    .template-sidebar .resume-body{grid-template-columns:214px 1fr;gap:0;padding:0}
+    .template-sidebar .resume-body>div{padding:22px 54px 55px;grid-column:2;grid-row:1}
+    .template-sidebar .resume-body>aside{background:#171717;color:#fff;padding:34px 27px;grid-column:1;grid-row:1;margin-top:-151px;padding-top:187px;min-height:1018px}
+    .template-sidebar .resume-body>aside .resume-section h3{border-color:#555}
+    .template-sidebar .skill-list{display:block}
+    .template-sidebar .skill{border:0;padding:4px 0;display:block;color:#eee}
+    .template-sidebar .language{border-color:#3e3e3e;display:block}
+    .template-sidebar .language span{display:block}.template-sidebar .language span:last-child{color:#aaa;margin-top:2px}
+    @media(max-width:980px){.toolbar-group .select-compact{display:none}.card-grid{grid-template-columns:1fr}.template-sidebar .resume-body>aside{min-height:1018px}}
+    @media(max-width:430px){.top-actions .btn{padding:0 10px}.top-actions .btn svg{display:none}}
+    @media print{.toast,dialog{display:none!important}.paper.template-sidebar{padding:0}.template-sidebar .resume-body>aside{min-height:297mm}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3h8l4 4v14H6V3Z" stroke="currentColor" stroke-width="1.8"/><path d="M14 3v5h4M9 12h6M9 16h6" stroke="currentColor" stroke-width="1.8"/></svg></span><span>Currículo Claro</span></div>
+      <div class="save-state" id="saveState">Salvo neste dispositivo</div>
+      <div class="top-actions">
+        <button class="btn desktop-only" id="openProject" type="button">Abrir projeto</button>
+        <input id="projectFile" type="file" accept=".curriculo,.json,application/json" hidden>
+        <button class="btn primary" id="exportButton" type="button"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Exportar</button>
+      </div>
+    </header>
+    <div class="mobile-tabs" aria-label="Alternar visualização"><button class="mobile-tab active" data-view="edit" type="button">Editar</button><button class="mobile-tab" data-view="preview" type="button">Prévia</button></div>
+    <main class="workspace">
+      <aside class="editor">
+        <div class="editor-head"><div><p class="eyebrow">Seu currículo</p><h1>Conte sua trajetória</h1></div><button class="btn" id="newResume" type="button">Novo</button></div>
+        <div class="progress" aria-label="Progresso do preenchimento"><span id="progressBar"></span></div>
+        <section class="section">
+          <div class="section-title"><h2>Visual</h2><small>3 modelos</small></div>
+          <div class="template-grid" role="group" aria-label="Modelo do currículo">
+            <button class="template-choice active" data-template="classic" type="button">Clássico</button>
+            <button class="template-choice" data-template="mono" type="button">Editorial</button>
+            <button class="template-choice" data-template="sidebar" type="button">Lateral</button>
+          </div>
+          <div class="color-row" role="group" aria-label="Cor de destaque">
+            <button class="swatch active" style="--swatch:#2d5bff" data-color="#2d5bff" aria-label="Azul" type="button"></button>
+            <button class="swatch" style="--swatch:#0c7c6b" data-color="#0c7c6b" aria-label="Verde" type="button"></button>
+            <button class="swatch" style="--swatch:#a13d2d" data-color="#a13d2d" aria-label="Terracota" type="button"></button>
+            <button class="swatch" style="--swatch:#272727" data-color="#272727" aria-label="Preto" type="button"></button>
+          </div>
+        </section>
+        <section class="section">
+          <div class="section-title"><h2>Informações pessoais</h2><small>Obrigatório</small></div>
+          <div class="field-grid">
+            <div class="field full"><label for="name">Nome completo</label><input id="name" data-basic="name" autocomplete="name"></div>
+            <div class="field full"><label for="role">Cargo ou área</label><input id="role" data-basic="role"></div>
+            <div class="field"><label for="email">E-mail</label><input id="email" data-basic="email" type="email" autocomplete="email"></div>
+            <div class="field"><label for="phone">Telefone</label><input id="phone" data-basic="phone" autocomplete="tel"></div>
+            <div class="field full"><label for="city">Cidade</label><input id="city" data-basic="city" autocomplete="address-level2"></div>
+            <div class="field"><label for="linkedin">LinkedIn</label><input id="linkedin" data-basic="linkedin" placeholder="linkedin.com/in/seunome"></div>
+            <div class="field"><label for="portfolio">Portfólio</label><input id="portfolio" data-basic="portfolio" placeholder="seusite.com"></div>
+          </div>
+        </section>
+        <section class="section">
+          <div class="section-title"><h2>Resumo profissional</h2><small>Até 500 caracteres</small></div>
+          <div class="field"><label for="summary">Apresentação</label><textarea id="summary" maxlength="500"></textarea></div>
+        </section>
+        <section class="section">
+          <div class="section-title"><h2>Experiência</h2><small>Mais recente primeiro</small></div>
+          <div id="experienceList"></div>
+          <button class="add-btn" data-add="experience" type="button">+ Adicionar experiência</button>
+        </section>
+        <section class="section">
+          <div class="section-title"><h2>Formação</h2><small>Curso e instituição</small></div>
+          <div id="educationList"></div>
+          <button class="add-btn" data-add="education" type="button">+ Adicionar formação</button>
+        </section>
+        <section class="section">
+          <div class="section-title"><h2>Competências</h2><small>Pressione Enter</small></div>
+          <label for="skillInput">Habilidades</label>
+          <div class="tags-input" id="skillTags"><input id="skillInput" placeholder="Ex.: Excel"></div>
+        </section>
+        <section class="section">
+          <div class="section-title"><h2>Idiomas</h2><small>Opcional</small></div>
+          <div id="languageList"></div>
+          <button class="add-btn" data-add="language" type="button">+ Adicionar idioma</button>
+        </section>
+      </aside>
+      <section class="preview-zone" aria-label="Prévia do currículo">
+        <div class="paper-wrap"><span class="hint">Prévia em A4</span>
+          <article class="paper" id="resume" aria-live="polite"></article>
+        </div>
+      </section>
+    </main>
+  </div>
+  <dialog id="exportDialog">
+    <div class="modal-head"><h2>Exportar currículo</h2><button class="close-btn" type="button" aria-label="Fechar">×</button></div>
+    <div class="export-list">
+      <button class="export-option" data-export="pdf" type="button"><span class="export-icon">PDF</span><span><strong>Salvar como PDF</strong><small>Ideal para enviar a recrutadores</small></span><span class="chev">›</span></button>
+      <button class="export-option" data-export="png" type="button"><span class="export-icon">PNG</span><span><strong>Baixar imagem PNG</strong><small>Uma imagem em alta resolução</small></span><span class="chev">›</span></button>
+      <button class="export-option" data-export="print" type="button"><span class="export-icon">PRN</span><span><strong>Imprimir</strong><small>Use a impressora configurada</small></span><span class="chev">›</span></button>
+      <button class="export-option" data-export="project" type="button"><span class="export-icon">EDIT</span><span><strong>Salvar projeto editável</strong><small>Reabra depois para fazer alterações</small></span><span class="chev">›</span></button>
+    </div>
+    <p class="modal-note">Guarde também o arquivo <strong>.curriculo</strong>. PDF e PNG são cópias finais; o projeto é o arquivo que permite continuar editando.</p>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script>
+  (function(){
+    "use strict";
+    var STORAGE_KEY="curriculo-claro-v1";
+    var defaultData={
+      version:1,template:"classic",accent:"#2d5bff",
+      basics:{name:"Marina Costa",role:"Designer de Produto",email:"marina@email.com",phone:"(11) 99999-0000",city:"São Paulo, SP",linkedin:"linkedin.com/in/marinacosta",portfolio:"marinacosta.design"},
+      summary:"Designer de produto com 6 anos de experiência criando experiências digitais simples, acessíveis e orientadas a resultados.",
+      experiences:[
+        {id:"exp1",role:"Product Designer Sênior",company:"Estúdio Horizonte",start:"2022",end:"Atual",description:"Liderei o redesign do produto principal, aumentando a conclusão de tarefas em 28% e reduzindo chamados de suporte."},
+        {id:"exp2",role:"Product Designer",company:"Norte Digital",start:"2019",end:"2022",description:"Criei fluxos e protótipos para produtos B2B em colaboração com engenharia e pesquisa."}
+      ],
+      education:[{id:"edu1",course:"Design Digital",institution:"Universidade Anhembi Morumbi",start:"2015",end:"2018"}],
+      skills:["Product Design","Figma","Pesquisa","Prototipação","Design Systems"],
+      languages:[{id:"lang1",name:"Português",level:"Nativo"},{id:"lang2",name:"Inglês",level:"Avançado"}]
+    };
+    var data=loadLocal()||clone(defaultData);
+    var saveTimer;
+    var toastTimer;
+    var resume=document.getElementById("resume");
+    var workspace=document.querySelector(".workspace");
+
+    function clone(value){return JSON.parse(JSON.stringify(value));}
+    function uid(prefix){return prefix+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+    function escapeHtml(value){return String(value||"").replace(/[&<>"']/g,function(char){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[char];});}
+    function filename(){var name=(data.basics.name||"meu-curriculo").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");return name||"meu-curriculo";}
+    function loadLocal(){try{var parsed=JSON.parse(localStorage.getItem(STORAGE_KEY));return validateProject(parsed)?normalizeProject(parsed):null;}catch(error){return null;}}
+    function validateProject(value){return !!(value&&typeof value==="object"&&value.basics&&Array.isArray(value.experiences)&&Array.isArray(value.education)&&Array.isArray(value.skills)&&Array.isArray(value.languages));}
+    function normalizeProject(value){
+      var result=clone(defaultData);
+      result.template=["classic","mono","sidebar"].indexOf(value.template)>=0?value.template:"classic";
+      result.accent=/^#[0-9a-f]{6}$/i.test(value.accent||"")?value.accent:"#2d5bff";
+      Object.assign(result.basics,value.basics||{});
+      result.summary=String(value.summary||"");
+      result.experiences=value.experiences.map(function(item){return Object.assign({id:uid("exp"),role:"",company:"",start:"",end:"",description:""},item);});
+      result.education=value.education.map(function(item){return Object.assign({id:uid("edu"),course:"",institution:"",start:"",end:""},item);});
+      result.skills=value.skills.map(String).slice(0,30);
+      result.languages=value.languages.map(function(item){return Object.assign({id:uid("lang"),name:"",level:""},item);});
+      return result;
+    }
+    function scheduleSave(){
+      clearTimeout(saveTimer);
+      document.getElementById("saveState").textContent="Salvando…";
+      saveTimer=setTimeout(function(){localStorage.setItem(STORAGE_KEY,JSON.stringify(data));document.getElementById("saveState").textContent="Salvo neste dispositivo";},280);
+      renderPreview();updateProgress();
+    }
+    function toast(message){var el=document.getElementById("toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.classList.remove("show");},3200);}
+    function updateProgress(){
+      var basics=data.basics;
+      var checks=[basics.name,basics.role,basics.email,basics.phone,basics.city,data.summary,data.experiences.length,data.education.length,data.skills.length];
+      var done=checks.filter(Boolean).length;
+      document.getElementById("progressBar").style.width=Math.round(done/checks.length*100)+"%";
+    }
+    function contactHtml(){
+      return [data.basics.email,data.basics.phone,data.basics.city,data.basics.linkedin,data.basics.portfolio].filter(Boolean).map(function(value){return "<span>"+escapeHtml(value)+"</span>";}).join("");
+    }
+    function experiencesHtml(){
+      if(!data.experiences.length)return '<p class="empty-copy">Adicione sua experiência profissional.</p>';
+      return data.experiences.map(function(item){return '<div class="entry"><div class="entry-top"><span class="entry-title">'+escapeHtml(item.role||"Cargo")+'</span><span class="entry-date">'+escapeHtml([item.start,item.end].filter(Boolean).join(" — "))+'</span></div><div class="entry-sub">'+escapeHtml(item.company)+'</div>'+(item.description?'<p class="entry-desc">'+escapeHtml(item.description)+'</p>':"")+'</div>';}).join("");
+    }
+    function educationHtml(){
+      if(!data.education.length)return '<p class="empty-copy">Adicione sua formação.</p>';
+      return data.education.map(function(item){return '<div class="entry"><div class="entry-top"><span class="entry-title">'+escapeHtml(item.course||"Curso")+'</span><span class="entry-date">'+escapeHtml([item.start,item.end].filter(Boolean).join(" — "))+'</span></div><div class="entry-sub">'+escapeHtml(item.institution)+'</div></div>';}).join("");
+    }
+    function renderPreview(){
+      document.documentElement.style.setProperty("--blue",data.accent);
+      resume.className="paper template-"+data.template;
+      resume.innerHTML='<header class="resume-header"><h2 class="resume-name">'+escapeHtml(data.basics.name||"Seu nome")+'</h2><p class="resume-role">'+escapeHtml(data.basics.role||"Cargo ou área")+'</p><div class="resume-contact">'+contactHtml()+'</div></header><div class="resume-body"><div>'+(data.summary?'<section class="resume-section"><h3>Perfil</h3><p class="summary">'+escapeHtml(data.summary)+'</p></section>':"")+'<section class="resume-section"><h3>Experiência</h3>'+experiencesHtml()+'</section><section class="resume-section"><h3>Formação</h3>'+educationHtml()+'</section></div><aside><section class="resume-section"><h3>Competências</h3><div class="skill-list">'+data.skills.map(function(skill){return '<span class="skill">'+escapeHtml(skill)+'</span>';}).join("")+'</div></section><section class="resume-section"><h3>Idiomas</h3>'+data.languages.map(function(item){return '<div class="language"><span>'+escapeHtml(item.name)+'</span><span>'+escapeHtml(item.level)+'</span></div>';}).join("")+'</section></aside></div>';
+      document.querySelectorAll(".template-choice").forEach(function(button){button.classList.toggle("active",button.dataset.template===data.template);});
+      document.querySelectorAll(".swatch").forEach(function(button){button.classList.toggle("active",button.dataset.color.toLowerCase()===data.accent.toLowerCase());});
+      fitPreview();
+    }
+    function fitPreview(){
+      var wrap=document.querySelector(".paper-wrap");
+      if(window.innerWidth<=980){
+        var available=Math.min(720,Math.max(260,window.innerWidth-24));
+        var scale=available/720;
+        resume.style.transform="scale("+scale+")";
+        resume.style.transformOrigin="top left";
+        wrap.style.width=available+"px";
+        wrap.style.height=(resume.offsetHeight*scale)+"px";
+      }else{
+        resume.style.transform="";
+        resume.style.transformOrigin="";
+        wrap.style.width="";
+        wrap.style.height="";
+      }
+    }
+    function experienceCard(item,index){
+      return '<div class="card" data-kind="experience" data-index="'+index+'"><button class="remove" type="button" aria-label="Remover experiência">×</button><div class="card-grid"><div class="field"><label>Cargo</label><input data-key="role" value="'+escapeHtml(item.role)+'"></div><div class="field"><label>Empresa</label><input data-key="company" value="'+escapeHtml(item.company)+'"></div><div class="field"><label>Início</label><input data-key="start" value="'+escapeHtml(item.start)+'" placeholder="2021"></div><div class="field"><label>Fim</label><input data-key="end" value="'+escapeHtml(item.end)+'" placeholder="Atual"></div><div class="field full"><label>Resultados e responsabilidades</label><textarea data-key="description">'+escapeHtml(item.description)+'</textarea></div></div></div>';
+    }
+    function educationCard(item,index){
+      return '<div class="card" data-kind="education" data-index="'+index+'"><button class="remove" type="button" aria-label="Remover formação">×</button><div class="card-grid"><div class="field"><label>Curso</label><input data-key="course" value="'+escapeHtml(item.course)+'"></div><div class="field"><label>Instituição</label><input data-key="institution" value="'+escapeHtml(item.institution)+'"></div><div class="field"><label>Início</label><input data-key="start" value="'+escapeHtml(item.start)+'"></div><div class="field"><label>Fim</label><input data-key="end" value="'+escapeHtml(item.end)+'"></div></div></div>';
+    }
+    function languageCard(item,index){
+      return '<div class="card" data-kind="languages" data-index="'+index+'"><button class="remove" type="button" aria-label="Remover idioma">×</button><div class="card-grid"><div class="field"><label>Idioma</label><input data-key="name" value="'+escapeHtml(item.name)+'"></div><div class="field"><label>Nível</label><select data-key="level"><option'+(item.level==="Básico"?" selected":"")+'>Básico</option><option'+(item.level==="Intermediário"?" selected":"")+'>Intermediário</option><option'+(item.level==="Avançado"?" selected":"")+'>Avançado</option><option'+(item.level==="Fluente"?" selected":"")+'>Fluente</option><option'+(item.level==="Nativo"?" selected":"")+'>Nativo</option></select></div></div></div>';
+    }
+    function renderLists(){
+      document.getElementById("experienceList").innerHTML=data.experiences.map(experienceCard).join("");
+      document.getElementById("educationList").innerHTML=data.education.map(educationCard).join("");
+      document.getElementById("languageList").innerHTML=data.languages.map(languageCard).join("");
+      renderSkills();
+    }
+    function renderSkills(){
+      var wrapper=document.getElementById("skillTags");
+      wrapper.querySelectorAll(".tag-pill").forEach(function(tag){tag.remove();});
+      var input=document.getElementById("skillInput");
+      data.skills.forEach(function(skill,index){var tag=document.createElement("span");tag.className="tag-pill";tag.innerHTML=escapeHtml(skill)+' <button type="button" data-skill-index="'+index+'" aria-label="Remover '+escapeHtml(skill)+'">×</button>';wrapper.insertBefore(tag,input);});
+    }
+    function fillBasics(){
+      document.querySelectorAll("[data-basic]").forEach(function(input){input.value=data.basics[input.dataset.basic]||"";});
+      document.getElementById("summary").value=data.summary||"";
+    }
+    function renderAll(){fillBasics();renderLists();renderPreview();updateProgress();}
+    document.querySelector(".editor").addEventListener("input",function(event){
+      var input=event.target;
+      if(input.dataset.basic){data.basics[input.dataset.basic]=input.value;scheduleSave();return;}
+      if(input.id==="summary"){data.summary=input.value;scheduleSave();return;}
+      var card=input.closest(".card");
+      if(card&&input.dataset.key){data[card.dataset.kind][Number(card.dataset.index)][input.dataset.key]=input.value;scheduleSave();}
+    });
+    document.querySelector(".editor").addEventListener("change",function(event){
+      var input=event.target,card=input.closest(".card");
+      if(card&&input.dataset.key){data[card.dataset.kind][Number(card.dataset.index)][input.dataset.key]=input.value;scheduleSave();}
+    });
+    document.querySelector(".editor").addEventListener("click",function(event){
+      var template=event.target.closest(".template-choice");
+      if(template){data.template=template.dataset.template;scheduleSave();return;}
+      var swatch=event.target.closest(".swatch");
+      if(swatch){data.accent=swatch.dataset.color;scheduleSave();return;}
+      var add=event.target.closest("[data-add]");
+      if(add){
+        if(add.dataset.add==="experience")data.experiences.unshift({id:uid("exp"),role:"",company:"",start:"",end:"",description:""});
+        if(add.dataset.add==="education")data.education.unshift({id:uid("edu"),course:"",institution:"",start:"",end:""});
+        if(add.dataset.add==="language")data.languages.push({id:uid("lang"),name:"",level:"Intermediário"});
+        renderLists();scheduleSave();return;
+      }
+      var remove=event.target.closest(".remove");
+      if(remove){var card=remove.closest(".card");data[card.dataset.kind].splice(Number(card.dataset.index),1);renderLists();scheduleSave();return;}
+      var skillRemove=event.target.closest("[data-skill-index]");
+      if(skillRemove){data.skills.splice(Number(skillRemove.dataset.skillIndex),1);renderSkills();scheduleSave();}
+    });
+    document.getElementById("skillInput").addEventListener("keydown",function(event){
+      if((event.key==="Enter"||event.key===",")&&this.value.trim()){event.preventDefault();if(data.skills.length<30&&!data.skills.some(function(skill){return skill.toLowerCase()===event.target.value.trim().toLowerCase();})){data.skills.push(this.value.trim());this.value="";renderSkills();scheduleSave();}}
+      if(event.key==="Backspace"&&!this.value&&data.skills.length){data.skills.pop();renderSkills();scheduleSave();}
+    });
+    document.querySelectorAll(".mobile-tab").forEach(function(button){button.addEventListener("click",function(){var preview=this.dataset.view==="preview";workspace.classList.toggle("preview-mode",preview);document.querySelectorAll(".mobile-tab").forEach(function(tab){tab.classList.toggle("active",tab===button);});});});
+    document.getElementById("newResume").addEventListener("click",function(){if(confirm("Criar um currículo novo? O conteúdo atual continuará salvo apenas se você baixar o projeto editável.")){data=clone(defaultData);data.basics={name:"",role:"",email:"",phone:"",city:"",linkedin:"",portfolio:""};data.summary="";data.experiences=[];data.education=[];data.skills=[];data.languages=[];renderAll();scheduleSave();toast("Novo currículo criado");}});
+    var dialog=document.getElementById("exportDialog");
+    document.getElementById("exportButton").addEventListener("click",function(){dialog.showModal();});
+    dialog.querySelector(".close-btn").addEventListener("click",function(){dialog.close();});
+    dialog.addEventListener("click",function(event){if(event.target===dialog)dialog.close();});
+    document.getElementById("openProject").addEventListener("click",function(){document.getElementById("projectFile").click();});
+    document.getElementById("projectFile").addEventListener("change",function(){
+      var file=this.files&&this.files[0];if(!file)return;
+      var reader=new FileReader();
+      reader.onload=function(){try{var parsed=JSON.parse(reader.result);if(!validateProject(parsed))throw new Error("invalid");data=normalizeProject(parsed);renderAll();scheduleSave();toast("Projeto aberto com sucesso");}catch(error){alert("Este arquivo não é um projeto de currículo válido.");}};
+      reader.readAsText(file);this.value="";
+    });
+    function downloadBlob(blob,name){var url=URL.createObjectURL(blob);var link=document.createElement("a");link.href=url;link.download=name;document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url);},1000);}
+    function saveProject(){downloadBlob(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),filename()+".curriculo");toast("Projeto editável salvo");}
+    function printResume(asPdf){
+      dialog.close();
+      var original=document.title;document.title=filename();
+      if(asPdf)toast('Na janela de impressão, escolha "Salvar como PDF"');
+      setTimeout(function(){window.print();setTimeout(function(){document.title=original;},500);},80);
+    }
+    function wrapCanvas(ctx,text,x,y,maxWidth,lineHeight,maxLines){
+      var words=String(text||"").split(/\s+/),line="",lines=[],test;
+      words.forEach(function(word){test=line?line+" "+word:word;if(ctx.measureText(test).width>maxWidth&&line){lines.push(line);line=word;}else line=test;});
+      if(line)lines.push(line);
+      if(maxLines&&lines.length>maxLines){lines=lines.slice(0,maxLines);var last=lines.length-1;while(ctx.measureText(lines[last]+"…").width>maxWidth)lines[last]=lines[last].slice(0,-1);lines[last]+="…";}
+      lines.forEach(function(value,index){ctx.fillText(value,x,y+index*lineHeight);});
+      return y+lines.length*lineHeight;
+    }
+    function drawSectionTitle(ctx,title,x,y,width,color){
+      ctx.fillStyle="#171717";ctx.font="700 17px Arial";ctx.letterSpacing="2px";ctx.fillText(title.toUpperCase(),x,y);
+      ctx.fillStyle="#bcbcbc";ctx.fillRect(x,y+14,width,2);return y+48;
+    }
+    function drawPng(){
+      dialog.close();toast("Preparando imagem em alta resolução…");
+      var canvas=document.createElement("canvas");canvas.width=1240;canvas.height=1754;
+      var ctx=canvas.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,canvas.width,canvas.height);
+      var pad=105,mainX=pad,mainW=720,sideX=910,sideW=225,headerX=pad,headerWidth=1030;
+      if(data.template==="sidebar"){ctx.fillStyle="#171717";ctx.fillRect(0,0,350,1754);mainX=420;mainW=715;sideX=60;sideW=230;headerX=420;headerWidth=715;}
+      ctx.fillStyle="#171717";ctx.font=(data.template==="mono"?"800 54px Arial":"54px Georgia");ctx.fillText(data.basics.name||"Seu nome",headerX,130);
+      ctx.fillStyle=data.template==="mono"?"#333":data.accent;ctx.font="700 21px Arial";ctx.fillText((data.basics.role||"Cargo ou área").toUpperCase(),headerX,175);
+      ctx.fillStyle=data.template==="sidebar"?"#555":"#555";ctx.font="18px Arial";
+      var contacts=[data.basics.email,data.basics.phone,data.basics.city,data.basics.linkedin,data.basics.portfolio].filter(Boolean).join("  •  ");
+      wrapCanvas(ctx,contacts,headerX,215,headerWidth,27,2);
+      ctx.fillStyle="#171717";ctx.fillRect(headerX,258,headerWidth,data.template==="classic"?4:2);
+      var y=315;
+      if(data.summary){y=drawSectionTitle(ctx,"Perfil",mainX,y,mainW,data.accent);ctx.fillStyle="#333";ctx.font="22px Georgia";y=wrapCanvas(ctx,data.summary,mainX,y,mainW,34,7)+35;}
+      y=drawSectionTitle(ctx,"Experiência",mainX,y,mainW,data.accent);
+      data.experiences.forEach(function(item){
+        if(y>1510)return;
+        ctx.fillStyle="#171717";ctx.font="700 21px Arial";ctx.fillText(item.role||"Cargo",mainX,y);
+        ctx.fillStyle="#666";ctx.font="16px Arial";var period=[item.start,item.end].filter(Boolean).join(" — ");ctx.fillText(period,mainX+mainW-ctx.measureText(period).width,y);
+        ctx.fillStyle=data.accent;ctx.font="700 18px Arial";ctx.fillText(item.company||"",mainX,y+31);
+        ctx.fillStyle="#444";ctx.font="18px Arial";y=wrapCanvas(ctx,item.description,mainX,y+65,mainW,27,6)+32;
+      });
+      y=drawSectionTitle(ctx,"Formação",mainX,y,mainW,data.accent);
+      data.education.forEach(function(item){
+        if(y>1640)return;
+        ctx.fillStyle="#171717";ctx.font="700 20px Arial";ctx.fillText(item.course||"Curso",mainX,y);
+        ctx.fillStyle="#666";ctx.font="16px Arial";var period=[item.start,item.end].filter(Boolean).join(" — ");ctx.fillText(period,mainX+mainW-ctx.measureText(period).width,y);
+        ctx.fillStyle=data.accent;ctx.font="700 17px Arial";ctx.fillText(item.institution||"",mainX,y+30);y+=70;
+      });
+      var sy=315,light=data.template==="sidebar";
+      function sideTitle(title){ctx.fillStyle=light?"#fff":"#171717";ctx.font="700 17px Arial";ctx.fillText(title.toUpperCase(),sideX,sy);ctx.fillStyle=light?"#555":"#bbb";ctx.fillRect(sideX,sy+14,sideW,2);sy+=46;}
+      sideTitle("Competências");ctx.font="17px Arial";data.skills.forEach(function(skill){if(sy<1450){ctx.fillStyle=light?"#eee":"#333";sy=wrapCanvas(ctx,skill,sideX,sy,sideW,25,2)+9;}});sy+=26;
+      sideTitle("Idiomas");data.languages.forEach(function(item){if(sy<1550){ctx.fillStyle=light?"#fff":"#222";ctx.font="700 17px Arial";ctx.fillText(item.name,sideX,sy);ctx.fillStyle=light?"#aaa":"#666";ctx.font="16px Arial";ctx.fillText(item.level,sideX,sy+24);sy+=62;}});
+      canvas.toBlob(function(blob){downloadBlob(blob,filename()+".png");toast("Imagem PNG salva");},"image/png");
+    }
+    dialog.addEventListener("click",function(event){
+      var option=event.target.closest("[data-export]");if(!option)return;
+      if(option.dataset.export==="project"){dialog.close();saveProject();}
+      if(option.dataset.export==="pdf")printResume(true);
+      if(option.dataset.export==="print")printResume(false);
+      if(option.dataset.export==="png")drawPng();
+    });
+    document.addEventListener("keydown",function(event){if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="s"){event.preventDefault();saveProject();}});
+    window.addEventListener("beforeprint",function(){document.body.classList.add("printing");});
+    window.addEventListener("afterprint",function(){document.body.classList.remove("printing");});
+    function registerWebMcp(){
+      if(!document.modelContext||!document.modelContext.registerTool)return;
+      try{
+        document.modelContext.registerTool({name:"read_resume",title:"Ler currículo",description:"Lê o conteúdo atual do currículo sem fazer alterações.",inputSchema:{type:"object",properties:{},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:false},execute:function(){return clone(data);}});
+        document.modelContext.registerTool({name:"update_resume_basics",title:"Atualizar dados básicos",description:"Atualiza nome, cargo, contatos ou resumo no currículo aberto.",inputSchema:{type:"object",properties:{name:{type:"string"},role:{type:"string"},email:{type:"string"},phone:{type:"string"},city:{type:"string"},linkedin:{type:"string"},portfolio:{type:"string"},summary:{type:"string"}},additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:false},execute:function(input){var allowed=["name","role","email","phone","city","linkedin","portfolio","summary"];if(!input||typeof input!=="object"||Array.isArray(input)||Object.keys(input).some(function(key){return allowed.indexOf(key)<0||typeof input[key]!=="string";}))throw new Error("Dados inválidos: use apenas campos de texto permitidos.");Object.keys(data.basics).forEach(function(key){if(typeof input[key]==="string")data.basics[key]=input[key];});if(typeof input.summary==="string")data.summary=input.summary.slice(0,500);renderAll();scheduleSave();return {updated:true,name:data.basics.name};}});
+      }catch(error){}
+    }
+    window.addEventListener("resize",fitPreview);
+    renderAll();registerWebMcp();
+  })();
+  </script>
+</body>
+</html>
